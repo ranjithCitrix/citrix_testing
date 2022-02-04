@@ -1,118 +1,104 @@
 const max = 50;
-async function UsersFullSync({ dataStore, client }) {
-  console.log(" sync started");
-  const responsedata = await client.fetch("admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view");
-  //console.log(JSON.stringify(responsedata));
-  if (!responsedata.ok) {
+async function usersFullSync({ dataStore, client }) {
+  const responseData = await client.fetch(
+    "admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view"
+  );
+
+  if (!responseData.ok) {
     throw new Error(
-      `Accounts sync failed ${responsedata.status}:${responsedata.statusText}.`
+      `Events sync failed ${responseData.status}:${responseData.statusText}.`
     );
   }
-  let data = await responsedata.json();
-  // console.log(JSON.stringify(data));
+  const data = await responseData.json();
 
   for (let user of data.users) {
-    // console.log(JSON.stringify(user));
-    let user_data = {
-      agreed_to_terms: user.agreedToTerms,
+    let userData = {
+      agreed_To_Terms: user.agreedToTerms,
       archived: user.archived,
-      change_password_at_next_login: user.changePasswordAtNextLogin,
-      cocustomer_id: user.customerId,
+      change_Password_At_Next_Login: user.changePasswordAtNextLogin,
+      cocustomer_Id: user.customerId,
       etag: user.etag,
       id: user.id,
-      include_in_global_address_list: user.includeInGlobalAddressList,
-      is_admin: user.isAdmin,
-      is_enforced_in_2_sv: user.isEnforcedIn2Sv,
-      is_mailbox_setup: user.isMailboxSetup,
+      include_In_Global_Address_List: user.includeInGlobalAddressList,
+      is_Admin: user.isAdmin,
+      is_Enforced_In_2_Sv: user.isEnforcedIn2Sv,
+      is_Mailbox_Setup: user.isMailboxSetup,
       kind: user.kind,
-      name_family_name: user.name.familyName,
-      name_full_name: user.name.fullName,
-      nname_given_name: user.name.givenName,
-      org_unit_path: user.orgUnitPath,
-      primary_email: user.primaryEmail,
-      recovery_email: user.recoveryEmail,
+      name_Family_Name: user.name.familyName,
+      name_Full_Name: user.name.fullName,
+      nname_Given_Name: user.name.givenName,
+      org_Unit_Path: user.orgUnitPath,
+      primary_Email: user.primaryEmail,
+      recovery_Email: user.recoveryEmail,
       suspended: user.suspended,
     };
-    // console.log(JSON.stringify(user_data))
-    //console.log(`user.primaryEmail${JSON.stringify(user.primaryEmail)}`);
-    dataStore.save("users", user_data);
+
+    dataStore.save("users", userData);
 
     await Events(dataStore, client, user.primaryEmail);
-
   }
 }
-//const primaryEmail = ["user.primaryEmail"];
-async function Events(dataStore, client, primaryEmail) {
- // console.log("primaryEmail");
-  const responsedata2 = await client.fetch(`calendar/v3/calendars/${primaryEmail}/events?maxResults=${max}&showDeleted=false&singleEvents=true&orderBy=startTime`);
-  console.log(JSON.stringify(responsedata2));
 
-  // console.log(error);
-  if (!responsedata2.ok) {
+async function Events(dataStore, client, primaryEmail) {
+  const responseDataEvent = await client.fetch(
+    `calendar/v3/calendars/${primaryEmail}/events?maxResults=${max}&showDeleted=false&singleEvents=true&orderBy=startTime`
+  );
+
+  if (!responseDataEvent.ok) {
     throw new Error(
-      `Accounts sync failed ${responsedata2.status}:${responsedata2.statusText}.`
+      `Events sync failed ${responseDataEvent.status}:${responseDataEvent.statusText}.`
     );
   }
-  //console.log(error);
-  let data2 = await responsedata2.json();
-  console.log(JSON.stringify(data2));
-  for (let ev of data2.items) {
-    //console.log(JSON.stringify(ev?.attendees?.email))
-    let user_data2 = {
-      //kind: ev.kind,
-      // etag:ev.etag,
-      summary: ev.summary,
-      id: ev.id,
-      updated: ev.updated,
-      organizerself: ev.self,
-      status: ev.status,
-      conferencedatasignature: ev.signature,
-      htmllink: ev.htmlLink,
-      created: ev.created,
-      location: ev.location,
-      creator: ev.email,
-      organizer: ev.email,
-      remainders: ev.useDefault,
-      startdatetime: ev.dateTime,
-      starttimezone: ev.timeZone,
-      end: ev.dateTime,
-      endtimezone: ev.timeZone,
-      hangoutlink: ev.hangoutLink,
-      iCalUID: ev.iCalUID,
-      sequence: ev.sequence,
-      attendees: ev?.attendees?.email ?? null,
-      resstatus: ev?.attendees?.responseStatus ?? null,
-      guestcanmodify: ev.guestsCanModify,
-      recurringeventid: ev.recurringEventId,
-      originaldatetime: ev.dateTime,
-      conferenceid: ev.conferenceId,
-      iconuri: ev?.conferenceSolution?.iconUri ?? null,
-      krytype: ev.type,
-      name: ev.name,
-      description: ev.description,
-      private_copy: ev.privateCopy,
-      startDate: ev.startDate,
-      endDate: ev.endDate,
-      organizer_display_name: ev.displayName
 
+  let dataEvent = await responseDataEvent.json();
 
-
+  for (let items of dataEvent.items) {
+    let userDataEvent = {
+      summary: items.summary,
+      id: items.id,
+      updated: items.updated,
+      organizerSelf: items.self,
+      status: items.status,
+      conferencedDataSignature: items.signature,
+      htmlLink: items.htmlLink,
+      created: items.created,
+      location: items.location,
+      creator: items.email,
+      organizer: items.email,
+      remainders: items.useDefault,
+      startDateTime: items.dateTime,
+      startTimeZone: items.timeZone,
+      end: items.dateTime,
+      endTimeZone: items.timeZone,
+      hangoutLink: items.hangoutLink,
+      iCalUID: items.iCalUID,
+      sequence: items.sequence,
+      attendees: items?.attendees?.email ?? null,
+      resStatus: items?.attendees?.responseStatus ?? null,
+      guestCanModify: items.guestsCanModify,
+      recurringEventid: items.recurringEventId,
+      originalDateTime: items.dateTime,
+      conferenceId: items.conferenceId,
+      iconUri: items?.conferenceSolution?.iconUri ?? null,
+      krytype: items.type,
+      name: items.name,
+      description: items.description,
+      private_Copy: items.privateCopy,
+      startDate: items.startDate,
+      endDate: items.endDate,
+      organizer_Display_Name: items.displayName,
     };
-    //  console.log(JSON.stringify(user_data2))
-    //
-    dataStore.save("events", user_data2);
+
+    dataStore.save("events", userDataEvent);
   }
 }
 
-
-async function create_events({ dataStore, serviceClient, actionParameters }) {
-  console.log(actionParameters.primaryEmail);
-  const payload = ({
-
+async function createEvents({ dataStore, serviceClient, actionParameters }) {
+  const payLoad = {
     end: {
       date: actionParameters.enddate,
       datetime: actionParameters.enddatetime,
-      timeZone: actionParameters.endtimeZone
+      timeZone: actionParameters.endtimeZone,
     },
     start: {
       date: actionParameters.startdate,
@@ -121,27 +107,23 @@ async function create_events({ dataStore, serviceClient, actionParameters }) {
       timeZone: actionParameters.starttimezone,
     },
     summary: actionParameters.summary,
+  };
 
-  })
-
-
-  const response = await serviceClient.fetch((`calendar/v3/calendars/${actionParameters.primaryEmail}/events?sendUpdates=all&conferenceDataVersion=0`), {
-    method: "POST",
-    body: JSON.stringify(payload)
-
-  }) 
-    Events(dataStore, serviceClient, actionParameters.primaryEmail)
-    
+  const response = await serviceClient.fetch(
+    `calendar/v3/calendars/${actionParameters.primaryEmail}/events?sendUpdates=all&conferenceDataVersion=0`,
+    {
+      method: "POST",
+      body: JSON.stringify(payLoad),
+    }
+  );
+  await Events(dataStore, serviceClient, actionParameters.primaryEmail);
 }
-
-
-
 
 integration.define({
   synchronizations: [
     {
       name: "GoogleCalender",
-      fullSyncFunction: UsersFullSync
+      fullSyncFunction: usersFullSync,
     },
   ],
 
@@ -151,7 +133,7 @@ integration.define({
         name: "users",
         columns: [
           {
-            name: "agreed_to_terms",
+            name: "agreed_To_Terms",
             type: "BOOLEAN",
           },
           {
@@ -159,12 +141,11 @@ integration.define({
             type: "BOOLEAN",
           },
           {
-            name: "change_password_at_next_login",
+            name: "change_Password_At_Next_Login",
             type: "BOOLEAN",
           },
-
           {
-            name: "customer_id",
+            name: "customer_Id",
             type: "STRING",
             length: 255,
           },
@@ -180,22 +161,19 @@ integration.define({
             primaryKey: true,
           },
           {
-            name: "include_in_global_address_list",
+            name: "include_In_Global_Address_List",
             type: "BOOLEAN",
           },
-
           {
-            name: "is_admin",
+            name: "is_Admin",
             type: "BOOLEAN",
           },
-
           {
-            name: "is_enforced_in_2_sv",
+            name: "is_Enforced_In_2_Sv",
             type: "BOOLEAN",
           },
-
           {
-            name: "is_mailbox_setup",
+            name: "is_Mailbox_Setup",
             type: "BOOLEAN",
           },
           {
@@ -203,36 +181,34 @@ integration.define({
             type: "STRING",
             length: 255,
           },
-
           {
-            name: "name_family_name",
+            name: "name_Family_Name",
             type: "STRING",
             length: 255,
           },
           {
-            name: "name_full_name",
+            name: "name_Full_Name",
             type: "STRING",
             length: 255,
           },
           {
-            name: "nname_given_name",
+            name: "nname_Given_Name",
             type: "STRING",
             length: 255,
           },
           {
-            name: "org_unit_path",
+            name: "org_Unit_Path",
             type: "STRING",
             length: 255,
           },
           {
-            name: "primary_email",
+            name: "primary_Email",
             type: "STRING",
             length: 255,
-            primaryKey: true
-
+            primaryKey: true,
           },
           {
-            name: "recovery_email",
+            name: "recovery_Email",
             type: "STRING",
             length: 255,
           },
@@ -243,205 +219,209 @@ integration.define({
         ],
       },
       {
-        name: 'events',
+        name: "events",
         columns: [
           {
-            name: 'summary',
-            type: 'STRING',
-            length: 255
-          },
-          {
-            name: 'organizerself',
-            type: 'BOOLEAN'
-
-          },
-          {
-            name: 'conferencedatasignature',
-            type: 'STRING',
-            length: 255
-          },
-          {
-            name: 'recurringevent',
-            type: 'STRING',
-            length: 255
-          },
-          {
-            name: 'updated',
-            type: 'DATETIME'
-
-          },
-          {
-            name: 'starttimezone',
-            type: 'STRING',
-            length: 255
-          },
-          {
-            name: 'created1',
-            type: 'DATETIME'
-
-          },
-          {
-            name: 'status',
-            type: 'STRING',
-            length: 255
-          },
-          {
-            name: 'creator',
-            type: 'STRING',
-            length: 255
-          },
-          {
-            name: 'id',
-            type: 'STRING',
+            name: "summary",
+            type: "STRING",
             length: 255,
-            primaryKey: true
           },
           {
-            name: 'description',
-            type: 'STRING',
-            length: 1000
+            name: "organizerSelf",
+            type: "BOOLEAN",
           },
           {
-            name: 'end',
-            type: 'DATETIME'
+            name: "conferenceDataSignature",
+            type: "STRING",
+            length: 255,
           },
           {
-            name: 'iCalUid',
-            type: 'STRING',
-            length: 255
+            name: "recurringEvent",
+            type: "STRING",
+            length: 255,
           },
           {
-            name: 'endtimezone',
-            type: 'STRING',
-            length: 255
+            name: "updated",
+            type: "DATETIME",
           },
           {
-            name: 'etag',
-            type: 'STRING',
-            length: 255
+            name: "startTimeZone",
+            type: "STRING",
+            length: 255,
           },
 
           {
-            name: 'originaldatetime',
-            type: 'DATETIME'
+            name: "created",
+            type: "DATETIME",
           },
           {
-            name: 'conferenceid',
-            type: 'STRING',
-            length: 255
-
+            name: "status",
+            type: "STRING",
+            length: 255,
           },
           {
-            name: 'htmllink',
-            type: 'STRING',
-            length: 255
-
+            name: "creator",
+            type: "STRING",
+            length: 255,
           },
           {
-            name: 'iconuri',
-            type: 'STRING',
-            length: 255
-
+            name: "id",
+            type: "STRING",
+            length: 255,
+            primaryKey: true,
           },
           {
-            name: 'organizer',
-            type: 'STRING',
-            length: 255
+            name: "description",
+            type: "STRING",
+            length: 1000,
           },
           {
-            name: 'startdatetime',
-            type: 'DATETIME'
+            name: "end",
+            type: "DATETIME",
           },
           {
-            name: 'sequence',
-            type: 'INTEGER',
-          },
-
-          {
-            name: 'resstatus',
-            type: 'STRING',
-            length: 255
+            name: "iCalUid",
+            type: "STRING",
+            length: 255,
           },
           {
-            name: 'guestcanmodify',
-            type: 'BOOLEAN'
+            name: "endTimeZone",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "originalDateTime",
+            type: "DATETIME",
+          },
+          {
+            name: "conferenceId",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "htmlLink",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "iconUri",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "organizer",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "startDateTime",
+            type: "DATETIME",
+          },
+          {
+            name: "sequence",
+            type: "INTEGER",
+          },
+          {
+            name: "resStatus",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "guestCanModify",
+            type: "BOOLEAN",
           },
           {
             name: "startDate",
-            type: 'DATETIME'
+            type: "DATETIME",
           },
           {
             name: "endDate",
-            type: 'DATETIME'
+            type: "DATETIME",
           },
           {
-            name: "private_copy",
-            type: "BOOLEAN"
+            name: "private_Copy",
+            type: "BOOLEAN",
           },
           {
             name: "krytype",
             type: "STRING",
-            length: 255
+            length: 255,
           },
           {
             name: "name",
             type: "STRING",
-            length: 255
-          }
+            length: 255,
+          },
+          {
+            name: "organizer_Display_Name",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "hangoutLink",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "location",
+            type: "STRING",
+            length: 255,
+          },
+          {
+            name: "attendees",
+            type: "STRING",
+            length: 255,
+          },
         ],
-
       },
     ],
   },
   actions: [
     {
-      name: "create_events",
+      name: "createEvents",
       parameters: [
         {
           name: "startdate",
           type: "STRING",
-          required: true
+          required: true,
         },
         {
           name: "primaryEmail",
           type: "STRING",
-          required: true  
+          required: true,
         },
         {
           name: "starttimezone",
           type: "STRING",
-          required: true
+          required: true,
         },
         {
           name: "startdatetime",
           type: "STRING",
-          required: true
+          required: true,
         },
         {
           name: "enddate",
           type: "STRING",
-          required: true
+          required: true,
         },
         {
           name: "endtimezone",
           type: "STRING",
-          required: true
+          required: true,
         },
         {
           name: "enddatetime",
           type: "STRING",
-          required: true
+          required: true,
         },
-
         {
           name: "summary",
           type: "STRING",
-          required: true
+          required: true,
         },
-
       ],
-      function: create_events
+      function: createEvents,
     },
   ],
-
 });
