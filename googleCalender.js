@@ -6,13 +6,13 @@ async function usersFullSync({ dataStore, client }) {
 
   if (!responseData.ok) {
     throw new Error(
-      `Events sync failed ${responseData.status}:${responseData.statusText}.`
+      `Users sync failed ${responseData.status}:${responseData.statusText}.`
     );
   }
   const data = await responseData.json();
 
-  for (let user of data.users) {
-    let userData = {
+  for (const user of data.users) {
+    const userData = {
       agreed_To_Terms: user.agreedToTerms,
       archived: user.archived,
       change_Password_At_Next_Login: user.changePasswordAtNextLogin,
@@ -50,10 +50,10 @@ async function Events(dataStore, client, primaryEmail) {
     );
   }
 
-  let dataEvent = await responseDataEvent.json();
+  const dataEvent = await responseDataEvent.json();
 
-  for (let items of dataEvent.items) {
-    let userDataEvent = {
+  for (const items of dataEvent.items) {
+    const userDataEvent = {
       summary: items.summary,
       id: items.id,
       updated: items.updated,
