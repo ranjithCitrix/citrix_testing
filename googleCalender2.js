@@ -1,10 +1,11 @@
-let max1 = 50;
+let maxEvents = 50;
 
 let nextPageToken = "";
 
 let max = 1;
 
 async function usersFullSync({ dataStore, client }) {
+  for (let i = 1; i <= 3; i++) {
   do {
     const responseData = await client.fetch(
       `admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view&maxResults=${max}&pageToken=${nextPageToken}`
@@ -50,18 +51,16 @@ async function usersFullSync({ dataStore, client }) {
     } else {
       break;
     }
-  } while (nextPageToken != true);
-
-  
+  } while (!nextPageToken);
+}
 }
 async function Events(dataStore, client, primaryEmail) {
- 
-  for (let i = 0; i <= 3; i++) {
+  for (let i = 1; i <= 3; i++) {
     do {
       const responseDataEvent = await client.fetch(
-        `calendar/v3/calendars/${primaryEmail}/events?maxResults=${max1}&showDeleted=false&singleEvents=true&orderBy=startTime&pageToken=${nextPageToken}`
+        `calendar/v3/calendars/${primaryEmail}/events?maxResults=${maxEvents}&showDeleted=false&singleEvents=true&orderBy=startTime&pageToken=${nextPageToken}`
       );
-      
+
       if (!responseDataEvent.ok) {
         throw new Error(
           `Events sync failed ${responseDataEvent.status}:${responseDataEvent.statusText}.`
@@ -69,7 +68,7 @@ async function Events(dataStore, client, primaryEmail) {
       }
 
       let dataEvent = await responseDataEvent.json();
-     
+
       for (let items of dataEvent.items) {
         let userDataEvent = {
           summary: items.summary,
@@ -110,11 +109,10 @@ async function Events(dataStore, client, primaryEmail) {
       }
       if (dataEvent.nextPageToken) {
         nextPageToken = dataEvent.nextPageToken;
-        
       } else {
         break;
       }
-    } while (nextPageToken != true && i > 3);
+    } while (!nextPageToken && i > 3);
   }
 }
 
@@ -447,6 +445,19 @@ integration.define({
         },
       ],
       function: createEvents,
+    },
+  ],
+  relationships: [
+    {
+      name: "Get_Event_Id",
+      primaryTable: "users",
+      foreignTable: "events",
+      columnPairs: [
+        {
+          primaryKey: "id",
+          foreignKey: "id",
+        },
+      ],
     },
   ],
 });
