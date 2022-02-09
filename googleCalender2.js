@@ -6,53 +6,53 @@ let max = 1;
 
 async function usersFullSync({ dataStore, client }) {
   for (let i = 1; i <= 3; i++) {
-  do {
-    const responseData = await client.fetch(
-      `admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view&maxResults=${max}&pageToken=${nextPageToken}`
-    );
-
-    if (!responseData.ok) {
-      throw new Error(
-        `Events sync failed ${responseData.status}:${responseData.statusText}.`
+    do {
+      const responseData = await client.fetch(
+        `admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view&maxResults=${max}&pageToken=${nextPageToken}`
       );
-    }
-    const nextData = await responseData.json();
 
-    for (let user of nextData.users) {
-      let userData = {
-        agreed_To_Terms: user.agreedToTerms,
-        archived: user.archived,
-        change_Password_At_Next_Login: user.changePasswordAtNextLogin,
-        cocustomer_Id: user.customerId,
-        etag: user.etag,
-        id: user.id,
-        include_In_Global_Address_List: user.includeInGlobalAddressList,
-        is_Admin: user.isAdmin,
-        is_Enforced_In_2_Sv: user.isEnforcedIn2Sv,
-        is_Mailbox_Setup: user.isMailboxSetup,
-        kind: user.kind,
-        name_Family_Name: user.name.familyName,
-        name_Full_Name: user.name.fullName,
-        nname_Given_Name: user.name.givenName,
-        org_Unit_Path: user.orgUnitPath,
-        primary_Email: user.primaryEmail,
-        recovery_Email: user.recoveryEmail,
-        suspended: user.suspended,
-      };
+      if (!responseData.ok) {
+        throw new Error(
+          `Events sync failed ${responseData.status}:${responseData.statusText}.`
+        );
+      }
+      const nextData = await responseData.json();
 
-      dataStore.save("users", userData);
-      await Events(dataStore, client, user.primaryEmail);
-    }
+      for (let user of nextData.users) {
+        let userData = {
+          agreed_To_Terms: user.agreedToTerms,
+          archived: user.archived,
+          change_Password_At_Next_Login: user.changePasswordAtNextLogin,
+          cocustomer_Id: user.customerId,
+          etag: user.etag,
+          id: user.id,
+          include_In_Global_Address_List: user.includeInGlobalAddressList,
+          is_Admin: user.isAdmin,
+          is_Enforced_In_2_Sv: user.isEnforcedIn2Sv,
+          is_Mailbox_Setup: user.isMailboxSetup,
+          kind: user.kind,
+          name_Family_Name: user.name.familyName,
+          name_Full_Name: user.name.fullName,
+          nname_Given_Name: user.name.givenName,
+          org_Unit_Path: user.orgUnitPath,
+          primary_Email: user.primaryEmail,
+          recovery_Email: user.recoveryEmail,
+          suspended: user.suspended,
+        };
 
-    if (nextData.nextPageToken) {
-      console.log("stored");
+        dataStore.save("users", userData);
+        await Events(dataStore, client, user.primaryEmail);
+      }
 
-      nextPageToken = await nextData.nextPageToken;
-    } else {
-      break;
-    }
-  } while (!nextPageToken);
-}
+      if (nextData.nextPageToken) {
+        console.log("stored");
+
+        nextPageToken = await nextData.nextPageToken;
+      } else {
+        break;
+      }
+    } while (!nextPageToken);
+  }
 }
 async function Events(dataStore, client, primaryEmail) {
   for (let i = 1; i <= 3; i++) {
