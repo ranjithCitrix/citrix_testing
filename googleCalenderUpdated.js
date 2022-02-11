@@ -2,118 +2,113 @@ let maxEvents = 50;
 
 let nextPageToken = "";
 
-let max = 1;
+let maxUsers = 3;
 
 async function usersFullSync({ dataStore, client }) {
-  for (let i = 1; i <= 3; i++) {
-    do {
-      const responseData = await client.fetch(
-        `admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view&maxResults=${max}&pageToken=${nextPageToken}`
+  do {
+    const responseData = await client.fetch(
+      `admin/directory/v1/users?customer=my_customer&projection=full&viewType=admin_view&maxResults=${maxUsers}&pageToken=${nextPageToken}`
+    );
+
+    if (!responseData.ok) {
+      throw new Error(
+        `Events sync failed ${responseData.status}:${responseData.statusText}.`
       );
+    }
+    const nextData = await responseData.json();
 
-      if (!responseData.ok) {
-        throw new Error(
-          `Events sync failed ${responseData.status}:${responseData.statusText}.`
-        );
-      }
-      const nextData = await responseData.json();
+    for (const user of nextData.users) {
+      const userData = {
+        agreed_To_Terms: user.agreedToTerms,
+        archived: user.archived,
+        change_Password_At_Next_Login: user.changePasswordAtNextLogin,
+        cocustomer_Id: user.customerId,
+        etag: user.etag,
+        id: user.id,
+        include_In_Global_Address_List: user.includeInGlobalAddressList,
+        is_Admin: user.isAdmin,
+        is_Enforced_In_2_Sv: user.isEnforcedIn2Sv,
+        is_Mailbox_Setup: user.isMailboxSetup,
+        kind: user.kind,
+        name_Family_Name: user.name.familyName,
+        name_Full_Name: user.name.fullName,
+        nname_Given_Name: user.name.givenName,
+        org_Unit_Path: user.orgUnitPath,
+        primary_Email: user.primaryEmail,
+        recovery_Email: user.recoveryEmail,
+        suspended: user.suspended,
+      };
 
-      for (let user of nextData.users) {
-        let userData = {
-          agreed_To_Terms: user.agreedToTerms,
-          archived: user.archived,
-          change_Password_At_Next_Login: user.changePasswordAtNextLogin,
-          cocustomer_Id: user.customerId,
-          etag: user.etag,
-          id: user.id,
-          include_In_Global_Address_List: user.includeInGlobalAddressList,
-          is_Admin: user.isAdmin,
-          is_Enforced_In_2_Sv: user.isEnforcedIn2Sv,
-          is_Mailbox_Setup: user.isMailboxSetup,
-          kind: user.kind,
-          name_Family_Name: user.name.familyName,
-          name_Full_Name: user.name.fullName,
-          nname_Given_Name: user.name.givenName,
-          org_Unit_Path: user.orgUnitPath,
-          primary_Email: user.primaryEmail,
-          recovery_Email: user.recoveryEmail,
-          suspended: user.suspended,
-        };
+      dataStore.save("users", userData);
+      await Events(dataStore, client, user.primaryEmail);
+    }
 
-        dataStore.save("users", userData);
-        await Events(dataStore, client, user.primaryEmail);
-      }
-
-      if (nextData.nextPageToken) {
-        console.log("stored");
-
-        nextPageToken = await nextData.nextPageToken;
-      } else {
-        break;
-      }
-    } while (!nextPageToken);
-  }
+    if (nextData.nextPageToken) {
+      nextPageToken = await nextData.nextPageToken;
+    } else {
+      break;
+    }
+  } while (nextPageToken != true);
 }
 async function Events(dataStore, client, primaryEmail) {
-  for (let i = 1; i <= 3; i++) {
-    do {
-      const responseDataEvent = await client.fetch(
-        `calendar/v3/calendars/${primaryEmail}/events?maxResults=${maxEvents}&showDeleted=false&singleEvents=true&orderBy=startTime&pageToken=${nextPageToken}`
+  let i = 1;
+  do {
+    const responseDataEvent = await client.fetch(
+      `calendar/v3/calendars/${primaryEmail}/events?maxResults=${maxEvents}&showDeleted=false&singleEvents=true&orderBy=startTime&pageToken=${nextPageToken}`
+    );
+    i++;
+    if (!responseDataEvent.ok) {
+      throw new Error(
+        `Events sync failed ${responseDataEvent.status}:${responseDataEvent.statusText}.`
       );
+    }
 
-      if (!responseDataEvent.ok) {
-        throw new Error(
-          `Events sync failed ${responseDataEvent.status}:${responseDataEvent.statusText}.`
-        );
-      }
+    let dataEvent = await responseDataEvent.json();
 
-      let dataEvent = await responseDataEvent.json();
-
-      for (let items of dataEvent.items) {
-        let userDataEvent = {
-          summary: items.summary,
-          id: items.id,
-          updated: items.updated,
-          organizerSelf: items.self,
-          status: items.status,
-          conferencedDataSignature: items.signature,
-          htmlLink: items.htmlLink,
-          created: items.created,
-          location: items.location,
-          creator: items.email,
-          organizer: items.email,
-          remainders: items.useDefault,
-          startDateTime: items.dateTime,
-          startTimeZone: items.timeZone,
-          end: items.dateTime,
-          endTimeZone: items.timeZone,
-          hangoutLink: items.hangoutLink,
-          iCalUID: items.iCalUID,
-          sequence: items.sequence,
-          attendees: items?.attendees?.email ?? null,
-          resStatus: items?.attendees?.responseStatus ?? null,
-          guestCanModify: items.guestsCanModify,
-          recurringEventid: items.recurringEventId,
-          originalDateTime: items.dateTime,
-          conferenceId: items.conferenceId,
-          iconUri: items?.conferenceSolution?.iconUri ?? null,
-          krytype: items.type,
-          name: items.name,
-          description: items.description,
-          private_Copy: items.privateCopy,
-          startDate: items.startDate,
-          endDate: items.endDate,
-          organizer_Display_Name: items.displayName,
-        };
-        dataStore.save("events", userDataEvent);
-      }
-      if (dataEvent.nextPageToken) {
-        nextPageToken = dataEvent.nextPageToken;
-      } else {
-        break;
-      }
-    } while (!nextPageToken && i > 3);
-  }
+    for (const items of dataEvent.items) {
+      const userDataEvent = {
+        summary: items.summary,
+        id: items.id,
+        updated: items.updated,
+        organizerSelf: items.self,
+        status: items.status,
+        conferencedDataSignature: items.signature,
+        htmlLink: items.htmlLink,
+        created: items.created,
+        location: items.location,
+        creator: items.email,
+        organizer: items.email,
+        remainders: items.useDefault,
+        startDateTime: items.dateTime,
+        startTimeZone: items.timeZone,
+        end: items.dateTime,
+        endTimeZone: items.timeZone,
+        hangoutLink: items.hangoutLink,
+        iCalUID: items.iCalUID,
+        sequence: items.sequence,
+        attendees: items?.attendees?.email ?? null,
+        resStatus: items?.attendees?.responseStatus ?? null,
+        guestCanModify: items.guestsCanModify,
+        recurringEventid: items.recurringEventId,
+        originalDateTime: items.dateTime,
+        conferenceId: items.conferenceId,
+        iconUri: items?.conferenceSolution?.iconUri ?? null,
+        krytype: items.type,
+        name: items.name,
+        description: items.description,
+        private_Copy: items.privateCopy,
+        startDate: items.startDate,
+        endDate: items.endDate,
+        organizer_Display_Name: items.displayName,
+      };
+      dataStore.save("events", userDataEvent);
+    }
+    if (dataEvent.nextPageToken) {
+      nextPageToken = dataEvent.nextPageToken;
+    } else {
+      break;
+    }
+  } while (nextPageToken != true && i > 3);
 }
 
 async function createEvents({ dataStore, serviceClient, actionParameters }) {
@@ -445,19 +440,6 @@ integration.define({
         },
       ],
       function: createEvents,
-    },
-  ],
-  relationships: [
-    {
-      name: "Get_Event_Id",
-      primaryTable: "users",
-      foreignTable: "events",
-      columnPairs: [
-        {
-          primaryKey: "id",
-          foreignKey: "id",
-        },
-      ],
     },
   ],
 });
